@@ -36,6 +36,7 @@ import { useSession } from 'next-auth/react';
 import { GetServerSideProps } from 'next';
 import { unstable_getServerSession } from 'next-auth';
 import { useRouter } from 'next/router';
+import { ArrowSVG } from '../components/arrow-svg';
 
 const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
@@ -45,6 +46,10 @@ const fRoutes = (dep: string, arr: string) =>
   )}&arr_iata=${encodeURIComponent(arr)}`;
 const fAirlines = (iata: string) =>
   `https://airlabs.co/api/v9/airlines?iata_code=${encodeURIComponent(
+    iata
+  )}&api_key=6d660a02-43ea-46fe-b79d-26ba567dc8fd`;
+const fAirport = (iata: string) =>
+  `https://airlabs.co/api/v9/airports?iata_code=${encodeURIComponent(
     iata
   )}&api_key=6d660a02-43ea-46fe-b79d-26ba567dc8fd`;
 
@@ -97,6 +102,13 @@ export default function Home() {
       )
     ).then(r => r.json());
 
+    const departureInfo = await fetch(
+      fAirport(formData.get('departure') as string)
+    ).then(r => r.json());
+    const arrivalInfo = await fetch(
+      fAirport(formData.get('arrival') as string)
+    ).then(r => r.json());
+
     const departureDay =
       days[new Date(formData.get('departing') as any).getDay()];
     const arrivalDay =
@@ -108,6 +120,22 @@ export default function Home() {
     const inbound = getUniqueRoutes(
       arrivalRoutes.response.filter((r: any) => r.days.includes(arrivalDay))
     );
+
+    try {
+      localStorage.setItem(
+        'route-coords',
+        JSON.stringify({
+          arrivalCoords: [
+            arrivalInfo.response[0].lat,
+            arrivalInfo.response[0].lng,
+          ],
+          departureCoords: [
+            departureInfo.response[0].lat,
+            departureInfo.response[0].lng,
+          ],
+        })
+      );
+    } catch {}
 
     setStatus('fetched');
     setPage('booking');
@@ -202,7 +230,13 @@ function MakeBooking({ outbound, inbound }: any) {
                   cursor="pointer"
                   transition="background 200ms ease-in-out"
                   rounded="lg"
-                  onClick={() => router.push('/booking')}
+                  onClick={() => {
+                    localStorage.setItem(
+                      'current-route',
+                      JSON.stringify(route)
+                    );
+                    router.push('/booking');
+                  }}
                   _hover={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
                   px="4"
                   py="3"
@@ -279,6 +313,17 @@ function MakeBooking({ outbound, inbound }: any) {
                   py="3"
                   alignItems="center"
                   justifyContent="space-between"
+                  cursor="pointer"
+                  _hover={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+                  transition="background 200ms ease-in-out"
+                  rounded="lg"
+                  onClick={() => {
+                    localStorage.setItem(
+                      'current-route',
+                      JSON.stringify(route)
+                    );
+                    router.push('/booking');
+                  }}
                 >
                   <Flex fontSize="lg" gap={2} alignItems="center">
                     {/* {JSON.stringify(route, null, 2)} */}
@@ -327,26 +372,6 @@ function MakeBooking({ outbound, inbound }: any) {
         </Flex>
       </Flex>
     </>
-  );
-}
-
-function ArrowSVG() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      className="feather feather-arrow-right"
-    >
-      <line x1="5" y1="12" x2="19" y2="12"></line>
-      <polyline points="12 5 19 12 12 19"></polyline>
-    </svg>
   );
 }
 

@@ -24,6 +24,7 @@
     "node-fetch": "^3.2.10",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-icons": "^4.6.0",
     "resium": "^1.15.1",
     "siwe": "^1.1.6",
     "three": "^0.145.0",

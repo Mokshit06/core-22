@@ -8,12 +8,18 @@ import {
   Box,
   Text,
 } from '@chakra-ui/react';
+import { signOut, useSession } from 'next-auth/react';
 import type { ReactNode } from 'react';
 import Link from './link';
 import { Logo } from './logo';
+import { useDisconnect } from 'wagmi';
+import { Siwe } from './siwe';
 // import { UserRole } from '@prisma/client';
 
 export default function Layout({ children }: { children: ReactNode }) {
+  const session = useSession();
+  const disconnect = useDisconnect();
+
   return (
     <Flex
       minH="100vh"
@@ -56,15 +62,20 @@ export default function Layout({ children }: { children: ReactNode }) {
           alignItems="center"
         >
           <Link href="/">Home</Link>
-          {false ? (
+          {session.status === 'authenticated' ? (
             <>
-              <Link href="/dashboard">Dashboard</Link>
-              <Button onClick={() => {}}>Logout</Button>
+              <Button
+                onClick={async () => {
+                  await disconnect.disconnectAsync();
+                  signOut();
+                }}
+              >
+                Logout
+              </Button>
             </>
           ) : (
             <>
-              <Link href="/login">Login</Link>
-              <Link href="/register">Register</Link>
+              <Siwe />
             </>
           )}
         </HStack>

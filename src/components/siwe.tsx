@@ -1,3 +1,4 @@
+import { Button, useToast } from '@chakra-ui/react';
 import { getCsrfToken, signIn } from 'next-auth/react';
 import { SiweMessage } from 'siwe';
 import { useConnect, useSignMessage } from 'wagmi';
@@ -6,6 +7,7 @@ import { useConnect, useSignMessage } from 'wagmi';
 export function Siwe() {
   const { connectAsync, connectors } = useConnect();
   const { signMessageAsync } = useSignMessage();
+  const toast = useToast();
 
   const handleLogin = async () => {
     try {
@@ -30,18 +32,23 @@ export function Siwe() {
         callbackUrl,
       });
     } catch (error) {
-      window.alert(error);
+      toast({
+        title: 'Something went wrong',
+        description: String(error),
+        status: 'error',
+      });
+      // window.alert(error);
     }
   };
 
   return (
-    <button
+    <Button
       onClick={e => {
         e.preventDefault();
         handleLogin();
       }}
     >
-      Sign-In with Ethereum
-    </button>
+      Sign-In with Eth
+    </Button>
   );
 }

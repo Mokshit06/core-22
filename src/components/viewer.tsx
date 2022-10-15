@@ -50,16 +50,17 @@ const p = (t: number) =>
   );
 
 type FlightViewerProps = {
-  destinationCoords: [lat: number, long: number];
+  arrivalCoords: [lat: number, long: number];
   departureCoords: [lat: number, long: number];
+  duration: number;
 };
 
-export function FlightViewer() {
+export function FlightViewer(props: FlightViewerProps) {
   const viewerRef = useRef<CesiumComponentRef<Cesium.Viewer>>(null);
   const [position, setPosition] = useState<Cesium.SampledPositionProperty>();
   const flightRef = useRef<CesiumComponentRef<Cesium.Entity>>(null);
 
-  const heading = useMemo(() => Cesium.Math.toRadians(-70), []);
+  const heading = useMemo(() => Cesium.Math.toRadians(90), []);
   const pitch = 0;
   const roll = 0;
   const hpr = useMemo(
@@ -67,22 +68,42 @@ export function FlightViewer() {
     [heading]
   );
   const orientation = useMemo(
-    () => Cesium.Transforms.headingPitchRollQuaternion(p(0), hpr),
+    () =>
+      Cesium.Transforms.headingPitchRollQuaternion(
+        Cesium.Cartesian3.fromDegrees(
+          props.departureCoords[1],
+          props.departureCoords[0],
+          1000
+        ),
+        hpr
+      ),
     []
   );
 
   useEffect(() => {
-    const totalSeconds = 60 * 60 * 60;
+    const totalSeconds = props.duration * 60;
 
     const start = JulianDate.fromDate(new Date());
     const stop = JulianDate.addSeconds(start, totalSeconds, new JulianDate());
 
     const position = new Cesium.SampledPositionProperty();
 
-    for (let i = -totalSeconds; i < 2 * totalSeconds; i += 10) {
-      const time = JulianDate.addSeconds(start, i, new JulianDate());
-      position.addSample(time, p(i));
-    }
+    position.addSample(
+      JulianDate.addSeconds(start, 0, new JulianDate()),
+      Cesium.Cartesian3.fromDegrees(
+        props.departureCoords[1],
+        props.departureCoords[0],
+        1000
+      )
+    );
+    position.addSample(
+      JulianDate.addSeconds(start, props.duration, new JulianDate()),
+      Cesium.Cartesian3.fromDegrees(
+        props.arrivalCoords[1],
+        props.arrivalCoords[0],
+        1000
+      )
+    );
 
     setPosition(position);
 
@@ -107,43 +128,41 @@ export function FlightViewer() {
   }, []);
 
   return (
-    <Box minH="100vh" minW="100vw">
-      <Viewer
-        full
-        infoBox={false}
-        shadows
-        shouldAnimate
-        ref={viewerRef}
-        style={{
-          position: 'relative',
-          height: '100vh',
+    <Viewer
+      infoBox={false}
+      shadows
+      full
+      shouldAnimate
+      ref={viewerRef}
+      style={{
+        position: 'relative',
+        height: '100vh',
+      }}
+    >
+      <CloudCollection show />
+      <Entity
+        name="flight"
+        position={position}
+        orientation={orientation as any}
+        model={{
+          uri: '/scene.gltf',
+          minimumPixelSize: 128,
+          maximumScale: 20000,
         }}
-      >
-        <CloudCollection show />
-        <Entity
-          name="flight"
-          position={position}
-          orientation={orientation as any}
-          model={{
-            uri: '/scene.gltf',
-            minimumPixelSize: 128,
-            maximumScale: 20000,
-          }}
-          ref={flightRef}
-          path={{
-            leadTime: new Cesium.ConstantProperty(36000),
-            trailTime: new Cesium.ConstantProperty(3600),
-            width: 6,
-            resolution: 100,
-            material: new PolylineGlowMaterialProperty({
-              glowPower: 0.1,
-              color: Cesium.Color.DARKGRAY,
-              taperPower: 1,
-            }),
-          }}
-        />
-        <Fog enabled minimumBrightness={0.4} />
-      </Viewer>
-    </Box>
+        ref={flightRef}
+        path={{
+          leadTime: new Cesium.ConstantProperty(36000),
+          trailTime: new Cesium.ConstantProperty(3600),
+          width: 6,
+          resolution: 100,
+          material: new PolylineGlowMaterialProperty({
+            glowPower: 0.1,
+            color: Cesium.Color.DARKGRAY,
+            taperPower: 1,
+          }),
+        }}
+      />
+      <Fog enabled minimumBrightness={0.4} />
+    </Viewer>
   );
 }
