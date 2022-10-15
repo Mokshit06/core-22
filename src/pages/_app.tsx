@@ -7,6 +7,9 @@ import {
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import type { AppProps } from 'next/app';
 import { useState } from 'react';
+import { SessionProvider } from 'next-auth/react';
+import { WagmiConfig, createClient } from 'wagmi';
+import { getDefaultProvider } from 'ethers';
 
 const theme = extendTheme({
   config: {
@@ -16,17 +19,27 @@ const theme = extendTheme({
   } as ThemeConfig,
 });
 
-function MyApp({ Component, pageProps }: AppProps<{ dehydratedState: any }>) {
+function MyApp({
+  Component,
+  pageProps,
+}: AppProps<{ dehydratedState: any; session: any }>) {
   const [queryClient] = useState(() => new QueryClient());
+  const [wagmiClient] = useState(() =>
+    createClient({ autoConnect: true, provider: getDefaultProvider() })
+  );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Hydrate state={pageProps.dehydratedState}>
-        <ChakraProvider theme={theme}>
-          <Component {...pageProps} />
-        </ChakraProvider>
-      </Hydrate>
-    </QueryClientProvider>
+    <WagmiConfig client={wagmiClient}>
+      <SessionProvider session={pageProps.session}>
+        <QueryClientProvider client={queryClient}>
+          <Hydrate state={pageProps.dehydratedState}>
+            <ChakraProvider theme={theme}>
+              <Component {...pageProps} />
+            </ChakraProvider>
+          </Hydrate>
+        </QueryClientProvider>
+      </SessionProvider>
+    </WagmiConfig>
   );
 }
 

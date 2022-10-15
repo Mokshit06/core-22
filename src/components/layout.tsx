@@ -16,11 +16,11 @@ import { Logo } from './logo';
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <Flex
-      minH="125vh"
+      minH="100vh"
       bgImage="url(/hero.jpg)"
       bgPosition="bottom"
       bgSize="150rem"
-      bgColor="rgb(248 250 252)"
+      // bgColor="gray.900"
       backdropFilter="blur(10px)"
       bgRepeat="no-repeat"
       fontFamily="Inter var,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji"
@@ -40,7 +40,8 @@ export default function Layout({ children }: { children: ReactNode }) {
           mr={5}
           gap={5}
         >
-          <Box as={Logo} />
+          <Box as="img" src="/logo-coloured.png" height="3rem" />
+          {/* <Box as={Logo} /> */}
           <Text fontSize="2xl" fontWeight="bold">
             Tony Airlines
           </Text>
